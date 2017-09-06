@@ -3,24 +3,22 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
 def get_data(json_object):
-    model_data = pd.read_json(json_object)
+    '''
+    Unpacking the fraud ticket information and dropping irrelevant data. 'Live' data will not have labels
 
-    #Unpacking the ticket information, creating the labels, and dropping irrelevant columns
+    json_object -- the json output from the 'live' data
+    '''
+
+    model_data = pd.read_json(json_object)
     model_data['num_ticket_type'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[0])
     model_data['avg_ticket_cost'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[1])
     model_data['avg_ticket_tot_cnt'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[2])
     model_data['avg_ticket_sold_cnt'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[3])
     model_data['event_age_at_start(days)'] = (model_data['event_start'] - model_data['event_created'])/86400.0
-    label_map = {'fraudster': 1, 'fraudster_event': 1, 'locked': 0, 'premium': 0, \
-                'spammer_limited': 0, 'spammer_noinvite': 0, 'spammer_warn': 0, 'tos_warn': 0, 'premium': 0}
-    model_data['label'] = model_data['acct_type'].map(label_map)
-    model_data = model_data[['num_ticket_type', 'avg_ticket_cost', 'avg_ticket_tot_cnt', 'avg_ticket_sold_cnt', \
-                'event_age_at_start(days)', 'label']]
-
+    model_data = model_data[['num_ticket_type', 'avg_ticket_cost', 'avg_ticket_tot_cnt', 'avg_ticket_sold_cnt', 'event_age_at_start(days)']
     model_data = model_data.dropna()
-    X = model_data.drop('label', axis=1).as_matrix()
-    y = model_data['label'].values
-    return X, y
+    X = model_data.as_matrix()
+    return X
 
 def parse_tickets(ticket_types):
     '''
