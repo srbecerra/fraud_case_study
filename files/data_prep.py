@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
 
 def get_data(json_object):
     '''
@@ -15,7 +14,7 @@ def get_data(json_object):
     model_data['avg_ticket_tot_cnt'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[2])
     model_data['avg_ticket_sold_cnt'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[3])
     model_data['event_age_at_start(days)'] = (model_data['event_start'] - model_data['event_created'])/86400.0
-    model_data = model_data[['num_ticket_type', 'avg_ticket_cost', 'avg_ticket_tot_cnt', 'avg_ticket_sold_cnt', 'event_age_at_start(days)']
+    model_data = model_data[['num_ticket_type', 'avg_ticket_cost', 'avg_ticket_tot_cnt', 'avg_ticket_sold_cnt', 'event_age_at_start(days)']]
     model_data = model_data.dropna()
     X = model_data.as_matrix()
     return X
