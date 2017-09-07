@@ -13,13 +13,18 @@ def get_data(json_object):
     X - feature matrix without indicies
     '''
 
-    model_data = pd.DataFrame.from_dict(json_object,orient='index').T
-    model_data['num_ticket_type'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[0])
-    model_data['avg_ticket_cost'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[1])
-    model_data['avg_ticket_tot_cnt'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[2])
+    data = pd.DataFrame.from_dict(json_object,orient='index').T
+
+    model_data = data[['ticket_types', 'previous_payouts', 'user_created', 'user_age', 'event_start', 'event_created', 'approx_payout_date', 'name_length']]
+
     model_data['avg_ticket_sold_cnt'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[3])
     model_data['event_age_at_start(days)'] = (model_data['event_start'] - model_data['event_created'])/86400.0
-    model_data = model_data[['num_ticket_type', 'avg_ticket_cost', 'avg_ticket_tot_cnt', 'avg_ticket_sold_cnt', 'event_age_at_start(days)']]
+    model_data['total_payout_hist'] = model_data['previous_payouts'].map(lambda x: parse_payouts(x)[2])
+    model_data['payout'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[4])
+    model_data['num_payouts_hist'] = model_data['previous_payouts'].map(lambda x: parse_payouts(x)[0])
+    model_data['avg_ticket_cost'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[1])
+
+    model_data = model_data.drop(['ticket_types', 'previous_payouts', 'event_start', 'event_created'], axis=1)
     model_data = model_data.dropna()
     X = model_data.as_matrix()
     return X
