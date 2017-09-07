@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import json
 
 def get_data(json_object):
     '''
@@ -12,7 +13,7 @@ def get_data(json_object):
     X - feature matrix without indicies
     '''
 
-    model_data = pd.read_json(json_object)
+    model_data = pd.DataFrame.from_dict(json_object,orient='index').T
     model_data['num_ticket_type'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[0])
     model_data['avg_ticket_cost'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[1])
     model_data['avg_ticket_tot_cnt'] = model_data['ticket_types'].map(lambda x: parse_tickets(x)[2])
