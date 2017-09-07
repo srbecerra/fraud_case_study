@@ -5,7 +5,11 @@ def get_data(json_object):
     '''
     Unpacking the fraud ticket information and dropping irrelevant data. 'Live' data will not have labels
 
-    json_object -- the json output from the 'live' data
+    Input:
+    json file or buffer
+
+    Returns:
+    X - feature matrix without indicies
     '''
 
     model_data = pd.read_json(json_object)
@@ -21,19 +25,44 @@ def get_data(json_object):
 
 def parse_tickets(ticket_types):
     '''
-    Collapse differet ticket types into four attributes: number of types, average cost, average total number of each type, and average sold
+    Collapse differet ticket types into numerical representations.
 
-    ticket_types -- the ticket_types column from the fraud json data
+    Input:
+    ticket_types column for single event
+
+    Returns:
+    [number of types, average cost, average total number of each type, average sold, total payout]
     '''
     num_ticket_type = len(ticket_types)
     costs = []
     totals = []
     sold = []
+    payout = 0
     for ticket in ticket_types:
         costs.append(ticket['cost'])
         totals.append(ticket['quantity_total'])
         sold.append(ticket['quantity_sold'])
-    return [num_ticket_type, np.mean(costs), np.mean(totals), np.mean(sold)]
+        payout += ticket['cost'] * ticket['quantity_sold']
+    return [num_ticket_type, np.mean(costs), np.mean(totals), np.mean(sold), payout]
+
+def parse_payouts(payout_history):
+    '''
+    Summary of payout history.
+
+    Input:
+    Previous_payouts column for single event
+    Returns:
+    [number of previous payouts, the average payout amount, total paid out]
+    '''
+    num_payouts = len(payout_history)
+    avg_payout = []
+    total_payout = []
+    amounts = []
+    for payout in payout_history:
+        amounts.append(payout['amount'])
+    avg_payout = np.mean(amounts)
+    total_payout = np.sum(amounts)
+    return [num_payouts, avg_payout, total_payout]
 
 if __name__ == '__main__':
     pass
