@@ -7,13 +7,10 @@ import socket
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError, CollectionInvalid
 import cPickle as pickle
-from data_prep import get_data
+from data_prep import get_data, parse_tickets
 
 app = Flask(__name__)
 PORT = 5353
-REGISTER_URL = "http://10.3.0.79:5000/register"
-DATA = []
-TIMESTAMP = []
 COLUMNS = [#u'body_length',
  # u'name_length',
 #  u'event_end',
@@ -38,7 +35,7 @@ COLUMNS = [#u'body_length',
 #  u'org_twitter',
 #  u'gts',
 #  u'listed',
-#  u'ticket_types',
+ # u'ticket_types',
 #  u'org_facebook',
 #  u'num_order',
 #  u'user_age',
@@ -58,30 +55,35 @@ COLUMNS = [#u'body_length',
 #  u'has_header',
 #  u'_id',
  # u'show_map',
+ 'potential_cost',
  'prediction']
 
 def get_datapoint():
+    '''
+        Retrieves datapoint from external server and inserts datapoint into MongoDB
+    '''
     r = requests.get('http://galvanize-case-study-on-fraud.herokuapp.com/data_point')
     data = r.json()
-    TIMESTAMP.append(time.time())
 
     if not live_data.find({'object_id':data['object_id']}).count():
         data['prediction'] = model.predict(get_data(data))[0]
+        data['potential_cost'] = parse_tickets(data['ticket_types'])[-1]
         live_data.insert_one(data)
-        # live_data.update_one({'object_id' : data[]},{'$set' : {'result' : 0}})
         print 'inserted datapoint'
-    # print type(data)
-    # X = get_data(data)
-    # print model.predict(X)
 
 def get_database_data():
+    '''
+        Retreieves database information and extracts only columns in COLUMNS.
+        Returns html of datbase table.
+    '''
     pings = [item for item in live_data.find()]
+    pings = pings[::-1]
     items_list = [[x[y] for y in COLUMNS] for x in pings]
-    html = '''<table><tr>'''
-    # html = '''<tr>'''
+
+    html = '''<thead><tr>'''
     for col in COLUMNS:
         html += '<th>{}</th>'.format(col)
-    html += '</tr>'
+    html += '</tr></thead>'
     for items in items_list:
         html += '<tr id={}>'.format(items[1])
         for c in items:
@@ -92,64 +94,33 @@ def get_database_data():
         html += '</tr>'
     html += '</table>'
     return(html)
-#   <tr>
-#     <th>Company</th>
-#     <th>Contact</th>
-#     <th>Country</th>
-#   </tr>
-#   <tr>
-#     <td>Alfreds Futterkiste</td>
-#     <td>Maria Anders</td>
-#     <td>Germany</td>
-#   </tr>
-# </table>
-
-
-def print_table():
-    pass
 
 @app.route('/')
 def check():
-    # line1 = "Number of data points: {0}".format(len(DATA))
-    # if DATA and TIMESTAMP:
-    #     dt = datetime.fromtimestamp(TIMESTAMP[-1])
-    #     data_time = dt.strftime('%Y-%m-%d %H:%M:%S')
-    #     line2 = "Latest datapoint received at: {0}".format(data_time)
-    #     line3 = data
-    #     output = "{0}\n\n{1}\n\n{2}".format(line1, line2, line3)
-    # else:
-    #     output = line1
-    # return output, 200, {'Content-Type': 'text/css; charset=utf-8'}
+    '''
+    Returns: html of template plus script
+    '''
+
     html = render_template('starter_template.html', title='Hello!')
     html += '''<script type=text/javascript>
 
     $(function() {$('#tables')[0].innerHTML =` '''
-    # {}}".format(get_database_data())
-    # html += "'hi'"
     temp = get_database_data()
     html  = str(html)+temp
-    # html = str.join(str(html), temp)
-    # html = html + get_database_data()#.encode('utf-8','ignore')
     html += '''`});
+
     $(function() {
-    var tmp = $('tr');
-    var x;
-    for (i=1;i<tmp.length;i++){
-        console.log(tmp[i].children)
-        if (tmp[i].children[3].innerHTML == '1.0'){
-            tmp[i].style.backgroundColor = 'red';
+        var tmp = $('tr');
+        var x;
+        for (i=1;i<tmp.length;i++){
+            if (tmp[i].children[4].innerHTML == '1.0'){
+                tmp[i].style.backgroundColor = 'red';
+            }
         }
-    }
     });
+
     </script>'''
-
-    # get_database_data()
     return html
-    # return get_database_data()
-
-def register_for_ping(ip, port):
-    registration_data = {'ip': ip, 'port': port}
-    requests.post(REGISTER_URL, data=registration_data)
 
 if __name__ == '__main__':
     with open('static/model.pkl') as f:
@@ -162,7 +133,8 @@ if __name__ == '__main__':
 
     app.run(host='0.0.0.0', port=PORT, debug=True)
 
+
     while True:
         print 'running'
-        time.sleep(10)
         get_datapoint()
+        time.sleep(10)

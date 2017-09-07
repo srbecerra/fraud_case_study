@@ -27,7 +27,6 @@
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-
   </head>
 
   <body>
@@ -46,8 +45,9 @@
     <div class="container">
 
       <div class="starter-template">
-        <h1>Live Data</h1>
-        <table id='tables'>
+        <h1>Live Data</h1><a class="btn btn-primary" href="/" role="button">Refresh</a>
+
+        <table class='table table-striped' id='tables'>
           </table
       </div>
 
@@ -61,5 +61,13 @@
     <script src="../static/js/bootstrap.min.js"></script>
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="../static/js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- My scripts -->
+    <script type='text/javascript'>
+    $('tr').click(function() {
+      if ($(this)[0].style.backgroundColor == ""){
+          console.log('clicked')
+          $(this).css('backgroundColor','#23C177');
+        }});</script>
   </body>
 </html>
